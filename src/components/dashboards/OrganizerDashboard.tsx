@@ -1,46 +1,63 @@
 import React, { useState } from 'react';
-import { CampaignOrganizer } from '../../models/CampaignOrganizer';
-import { CampaignData } from '../../data/mockData';
+import { Timestamp, collection, query, where } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { useFirestoreQuery } from '../../hooks/useFirestoreQuery';
+import { useAuth } from '../../App';
+import { createCampaign } from '../../services/firestoreService';
+import { Campaign, CampaignOrganizer } from '../../models';
+import LoadingSpinner from '../common/LoadingSpinner';
 
-interface OrganizerDashboardProps {
-    user: CampaignOrganizer;
-    campaigns: CampaignData[];
-    onCreateCampaign: (newCampaign: CampaignData) => void;
-}
-
-const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ user, campaigns, onCreateCampaign }) => {
+const OrganizerDashboard: React.FC = () => {
+    const { currentUser } = useAuth();
     const [newCampaignTitle, setNewCampaignTitle] = useState('');
     const [newCampaignLocation, setNewCampaignLocation] = useState('');
     const [newCampaignDate, setNewCampaignDate] = useState('');
     const [newCampaignGoal, setNewCampaignGoal] = useState(50);
 
-    const organizerCampaigns = campaigns.filter(c => c.organizer === user.organizationName);
+    const campaignsQuery = currentUser
+        ? query(
+            collection(db, 'campaigns'),
+            where('organizerId', '==', currentUser.userId)
+          )
+        : null;
 
-    const handleCreateCampaign = (e: React.FormEvent) => {
+    const [organizerCampaigns, campaignsLoading] = useFirestoreQuery<Campaign>(campaignsQuery!);
+
+    const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newCampaignTitle || !newCampaignLocation || !newCampaignDate) {
             alert("Please fill in all fields to create a campaign.");
             return;
         }
-
-        const newCampaign: CampaignData = {
-            id: `camp-${Date.now()}`,
-            title: newCampaignTitle,
-            organizer: user.organizationName,
-            location: newCampaignLocation,
-            date: newCampaignDate,
-            goal: newCampaignGoal,
-            pledges: 0,
-        };
         
-        onCreateCampaign(newCampaign);
+        const organizerUser = currentUser as CampaignOrganizer;
 
-        // Reset form
-        setNewCampaignTitle('');
-        setNewCampaignLocation('');
-        setNewCampaignDate('');
-        setNewCampaignGoal(50);
+        // Add all required fields for the service function
+        const newCampaignData = {
+            title: newCampaignTitle,
+            location: newCampaignLocation,
+            date: Timestamp.fromDate(new Date(newCampaignDate)),
+            goal: newCampaignGoal,
+            organizationName: organizerUser.organizationName,
+            createdAt: Timestamp.now(), // Add createdAt timestamp
+        };
+
+        try {
+            await createCampaign(newCampaignData, organizerUser.userId, organizerUser.organizationName);
+            setNewCampaignTitle('');
+            setNewCampaignLocation('');
+            setNewCampaignDate('');
+            setNewCampaignGoal(50);
+            alert('Campaign created successfully!');
+        } catch (error) {
+            console.error("Error creating campaign: ", error);
+            alert('Failed to create campaign.');
+        }
     };
+    
+    if (campaignsLoading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div className="dashboard-grid">
@@ -49,42 +66,19 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ user, campaigns
                 <form onSubmit={handleCreateCampaign}>
                     <div className="form-group">
                         <label htmlFor="title">Campaign Title</label>
-                        <input
-                            type="text"
-                            id="title"
-                            value={newCampaignTitle}
-                            onChange={(e) => setNewCampaignTitle(e.target.value)}
-                            placeholder="e.g., Community Blood Drive"
-                        />
+                        <input type="text" id="title" value={newCampaignTitle} onChange={(e) => setNewCampaignTitle(e.target.value)} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="location">Location</label>
-                        <input
-                            type="text"
-                            id="location"
-                            value={newCampaignLocation}
-                            onChange={(e) => setNewCampaignLocation(e.target.value)}
-                            placeholder="e.g., Town Hall"
-                        />
+                        <input type="text" id="location" value={newCampaignLocation} onChange={(e) => setNewCampaignLocation(e.target.value)} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="date">Date</label>
-                        <input
-                            type="date"
-                            id="date"
-                            value={newCampaignDate}
-                            onChange={(e) => setNewCampaignDate(e.target.value)}
-                        />
+                        <input type="date" id="date" value={newCampaignDate} onChange={(e) => setNewCampaignDate(e.target.value)} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="goal">Unit Goal</label>
-                        <input
-                            type="number"
-                            id="goal"
-                            min="10"
-                            value={newCampaignGoal}
-                            onChange={(e) => setNewCampaignGoal(parseInt(e.target.value, 10))}
-                        />
+                        <input type="number" id="goal" min="10" value={newCampaignGoal} onChange={(e) => setNewCampaignGoal(parseInt(e.target.value, 10))} />
                     </div>
                     <button type="submit">Create Campaign</button>
                 </form>
@@ -97,7 +91,7 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ user, campaigns
                             <li key={campaign.id}>
                                <div className="campaign-info">
                                     <strong>{campaign.title}</strong>
-                                    <small>{campaign.date} at {campaign.location}</small>
+                                    <small>{new Date(campaign.date.toDate()).toLocaleDateString()} at {campaign.location}</small>
                                     <span>{campaign.pledges} / {campaign.goal} units pledged</span>
                                </div>
                             </li>
@@ -112,4 +106,3 @@ const OrganizerDashboard: React.FC<OrganizerDashboardProps> = ({ user, campaigns
 };
 
 export default OrganizerDashboard;
-

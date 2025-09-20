@@ -1,82 +1,82 @@
 import React, { useState } from 'react';
-import { HospitalStaff } from '../../models/HospitalStaff';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { useFirestoreQuery } from '../../hooks/useFirestoreQuery';
+import { useAuth } from '../../App';
+import { createBloodRequest, updateBloodRequest } from '../../services/firestoreService';
 import { MatchingService } from '../../services/MatchingService';
-import { BloodRequestData } from '../../data/mockData';
+import { BloodRequest } from '../../models/DataModels';
+import LoadingSpinner from '../common/LoadingSpinner';
+import { HospitalStaff } from '../../models';
 
-interface HospitalDashboardProps {
-    user: HospitalStaff;
-}
-
-const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ user }) => {
-    const [requests, setRequests] = useState<BloodRequestData[]>([]);
+const HospitalDashboard: React.FC = () => {
+    const { currentUser } = useAuth();
     const [newRequestBloodType, setNewRequestBloodType] = useState<string>('B-');
     const [newRequestUnits, setNewRequestUnits] = useState<number>(2);
     const [modalMessage, setModalMessage] = useState('');
     const [showModal, setShowModal] = useState(false);
 
+    const requestsQuery = currentUser
+        ? query(
+            collection(db, 'bloodRequests'),
+            where('hospitalId', '==', currentUser.userId),
+            orderBy('postedDate', 'desc')
+          )
+        : null;
+
+    const [requests, requestsLoading] = useFirestoreQuery<BloodRequest>(requestsQuery!);
+
     const handleRequestBlood = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        const newRequestData: BloodRequestData = {
-            id: `req-${Date.now()}`,
-            hospital: user.hospitalName,
+        const hospitalUser = currentUser as HospitalStaff;
+
+        const newRequestData = {
             bloodType: newRequestBloodType,
             unitsRequired: newRequestUnits,
-            unitsFulfilled: 0,
-            status: 'urgent',
-            postedDate: new Date().toISOString().split('T')[0],
-            log: ['Request posted. Initiating AI search...'],
+            hospitalId: hospitalUser.userId,
+            hospitalName: hospitalUser.hospitalName
         };
-        
-        setRequests(prev => [newRequestData, ...prev]);
-        setModalMessage('Request posted. Initiating AI search...');
+
+        setModalMessage('Posting request and initiating AI search...');
         setShowModal(true);
 
-        const service = new MatchingService();
-        
-        const requestForService = {
-            requestId: newRequestData.id,
-            hospital: newRequestData.hospital,
-            bloodType: newRequestData.bloodType,
-            unitsRequired: newRequestData.unitsRequired,
-            unitsFulfilled: newRequestData.unitsFulfilled,
-            status: 'pending' as 'pending' | 'fulfilled',
-            postedDate: new Date(newRequestData.postedDate),
-            log: newRequestData.log,
-        };
-        
-        // The service now returns the array of updates.
-        const serviceUpdates = await service.findBloodSource(requestForService);
+        try {
+            const docRef = await createBloodRequest(newRequestData, hospitalUser.userId, hospitalUser.hospitalName);
+            const service = new MatchingService();
+            
+            const tempRequest = new BloodRequest({
+                ...newRequestData,
+                id: docRef.id,
+            });
 
-        // This function now iterates over the data returned from the service.
-        const runUpdates = async () => {
-            // Delays are kept here to control the speed of the UI simulation.
-            const delays = [1500, 2000, 1500, 2000, 1000];
+            const serviceUpdates = await service.findBloodSource(tempRequest);
 
-            for (let i = 0; i < serviceUpdates.length; i++) {
-                const update = serviceUpdates[i];
-                await new Promise(resolve => setTimeout(resolve, delays[i] || 1500));
-                setModalMessage(prev => `${prev}\n- ${update.message}`);
-                setRequests(currentRequests => currentRequests.map(r =>
-                    r.id === newRequestData.id
-                    ? {
-                        ...r,
-                        log: [...r.log, update.message],
-                        unitsFulfilled: r.unitsFulfilled + (update.units || 0)
-                      }
-                    : r
-                ));
-            }
-        };
+            const updatedLog = ['Request posted. Initiating search...', ...serviceUpdates.map(u => u.message)];
+            
+            await updateBloodRequest(docRef.id, { 
+                log: updatedLog,
+            });
 
-        runUpdates();
+            setModalMessage(updatedLog.join('\n'));
+
+        } catch (error) {
+            console.error("Error creating blood request:", error);
+            setModalMessage('Failed to post blood request.');
+        }
     };
 
-    const handleCloseRequest = (requestId: string) => {
-        setRequests(currentRequests => currentRequests.map(r => 
-            r.id === requestId ? { ...r, status: 'fulfilled' } : r
-        ));
+    const handleMarkFulfilled = async (requestId: string) => {
+        try {
+            await updateBloodRequest(requestId, { status: 'fulfilled' });
+        } catch (error) {
+            console.error("Error updating request status:", error);
+        }
     };
+    
+    if (requestsLoading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <>
@@ -117,12 +117,12 @@ const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ user }) => {
                             <li key={req.id} className={`request-item status-${req.status}`}>
                                 <div className="request-info">
                                     <strong>{req.bloodType} ({req.unitsFulfilled}/{req.unitsRequired} units)</strong>
-                                    <small>Posted on {req.postedDate}</small>
+                                    <small>Posted on {new Date(req.postedDate?.toDate()).toLocaleString()}</small>
                                     <span>Status: {req.status.toUpperCase()}</span>
                                 </div>
                                 <div className="request-actions">
                                     {req.status === 'urgent' && (
-                                        <button onClick={() => handleCloseRequest(req.id)}>Mark Fulfilled</button>
+                                        <button onClick={() => handleMarkFulfilled(req.id!)}>Mark Fulfilled</button>
                                     )}
                                 </div>
                             </li>
@@ -137,4 +137,3 @@ const HospitalDashboard: React.FC<HospitalDashboardProps> = ({ user }) => {
 };
 
 export default HospitalDashboard;
-

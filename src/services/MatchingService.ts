@@ -1,44 +1,58 @@
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import { BloodRequest } from '../models/DataModels';
-import { mockDb } from '../data/mockData';
+import { createNotification } from './firestoreService';
+import { Donor } from '../models/Donor';
+import { getDemandPrediction } from './geminiService';
 
-// This is a placeholder type for the update objects.
 type SearchUpdate = {
     message: string;
     units?: number;
 };
 
 export class MatchingService {
-    /**
-     * Simulates a two-phase search for blood and returns the sequence of events.
-     * In a real application, this would involve complex logic and API calls.
-     * @param request The blood request object.
-     * @returns A promise that resolves to an array of search update events.
-     */
     public async findBloodSource(request: BloodRequest): Promise<SearchUpdate[]> {
-        console.log(`--- AI SEARCH INITIATED for Request ID: ${request.requestId} ---`);
+        const updates: SearchUpdate[] = [];
+        console.log(`--- AI SEARCH INITIATED for Request ID: ${request.id} ---`);
+
+        // --- GEMINI API INTEGRATION EXAMPLE ---
+        // 1. Predict Future Demand
+        // You could pass historical data to your geminiService.
+        // const prediction = await getDemandPrediction('Kollam', request.bloodType); 
+        // updates.push({ message: `AI Prediction: ${prediction}` });
         
-        // This simulates the logic that would happen after a real API call.
-        // The service is now responsible for generating the story of the search.
-        const updates: SearchUpdate[] = [
-            { message: "Phase 1: Checking partner hospital network..." },
-            { message: `Partial Success: 1 unit of ${request.bloodType} blood located at City Hospital.`, units: 1 },
-            { message: "Phase 2: Searching for voluntary donors..." },
-        ];
+        updates.push({ message: "Searching for voluntary donors..." });
+        
+        try {
+            const q = query(
+                collection(db, "users"), 
+                where("role", "==", "donor"),
+                where("bloodType", "==", request.bloodType)
+            );
+            const querySnapshot = await getDocs(q);
 
-        // Simulate finding a donor from the mock data.
-        const donors = (mockDb as any).users.filter((user: { role: string; }) => user.role === 'donor');
-        const foundDonor = donors.find((d: { bloodType: string; }) => d.bloodType === request.bloodType);
-
-        if (foundDonor) {
-            updates.push({ message: `Success: Voluntary donor '${foundDonor.userId}' found and notified.`, units: 1 });
-        } else {
-            updates.push({ message: `Warning: No suitable voluntary donors found for ${request.bloodType}.` });
+            if (!querySnapshot.empty) {
+                querySnapshot.forEach(doc => {
+                    const donor = doc.data() as Donor;
+                    
+                    // --- GEMINI API INTEGRATION EXAMPLE ---
+                    // 2. Generate a personalized notification message
+                    // const personalizedMessage = await generateDonorMessage(donor.username, request.hospitalName);
+                    // createNotification(donor.userId, personalizedMessage);
+                    
+                    const message = `Success: Voluntary donor '${donor.username}' found and notified.`;
+                    updates.push({ message, units: 1 });
+                });
+            } else {
+                updates.push({ message: `Warning: No suitable voluntary donors found for ${request.bloodType}.` });
+            }
+        } catch (error) {
+            console.error("Error searching for donors:", error);
+            updates.push({ message: `Error: Could not complete donor search.` });
         }
         
         updates.push({ message: "Search complete." });
-
         console.log("--- AI SEARCH COMPLETE ---");
         return updates;
     }
 }
-

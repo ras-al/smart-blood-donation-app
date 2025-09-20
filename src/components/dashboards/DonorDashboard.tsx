@@ -1,34 +1,78 @@
 import React from 'react';
+import { collection, query, where, orderBy } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import { useFirestoreQuery } from '../../hooks/useFirestoreQuery';
+import { useAuth } from '../../App';
+import { pledgeToCampaign } from '../../services/firestoreService';
+import { Campaign, DonationRecord } from '../../models/DataModels';
 import { Donor } from '../../models/Donor';
-import { mockDb, CampaignData } from '../../data/mockData';
+import LoadingSpinner from '../common/LoadingSpinner';
 
-interface DonorDashboardProps {
-    user: Donor;
-    campaigns: CampaignData[];
-    onPledge: (campaignId: string) => void;
-}
+const DonorDashboard: React.FC = () => {
+    const { currentUser } = useAuth();
+    // Cast currentUser to Donor type to access donor-specific properties
+    const donorUser = currentUser as Donor;
 
-const DonorDashboard: React.FC<DonorDashboardProps> = ({ user, campaigns, onPledge }) => {
-    const donationHistory = mockDb.donationHistory.filter(d => d.donorId === user.userId);
+    // Set up real-time Firestore queries
+    const campaignsQuery = query(collection(db, 'campaigns'), orderBy('date', 'desc'));
+    const historyQuery = currentUser
+        ? query(
+            collection(db, 'donationHistory'), 
+            where('donorId', '==', currentUser.userId), 
+            orderBy('date', 'desc')
+          )
+        : null;
+
+    const [campaigns, campaignsLoading] = useFirestoreQuery<Campaign>(campaignsQuery);
+    const [donationHistory, historyLoading] = useFirestoreQuery<DonationRecord>(historyQuery!);
+
     const totalUnitsDonated = donationHistory.reduce((acc, curr) => acc + curr.unitsDonated, 0);
+
+    const handlePledge = async (campaignId: string) => {
+        try {
+            await pledgeToCampaign(campaignId);
+            alert('Pledge successful! Thank you for your support.');
+        } catch (error) {
+            console.error("Error pledging to campaign:", error);
+            alert('There was an error making your pledge. Please try again.');
+        }
+    };
+
+    if (campaignsLoading || historyLoading) {
+        return <LoadingSpinner />;
+    }
 
     return (
         <div className="dashboard-grid">
+            {/* --- NEW PROFILE CARD --- */}
+            <div className="dashboard-card">
+                <h3>Profile Information</h3>
+                <div className="profile-info">
+                    <p><strong>Username:</strong> {donorUser.username}</p>
+                    <p><strong>Email:</strong> {donorUser.email}</p>
+                    <p><strong>Blood Type:</strong> <span className="blood-type-badge">{donorUser.bloodType}</span></p>
+                    <p><strong>Location:</strong> {donorUser.location}</p>
+                </div>
+                {/* You can add an "Edit Profile" button here later */}
+            </div>
+
             <div className="dashboard-card">
                 <h3>Track Your Impact</h3>
                 <div className="impact-score">
                     <h2>{totalUnitsDonated}</h2>
                     <p>Total Units Donated</p>
                 </div>
-                <p>Each donation can save up to 3 lives. Thank you for your contributions!</p>
+                <p>Each donation can save up to 3 lives. Thank you!</p>
             </div>
-            <div className="dashboard-card">
+
+            <div className="dashboard-card full-width-card">
                 <h3>Donation History</h3>
                 <ul>
                     {donationHistory.length > 0 ? (
                         donationHistory.map(record => (
                             <li key={record.id}>
-                                <strong>{record.date}:</strong> Donated {record.unitsDonated} unit(s) at {record.location}.
+                                <strong>{new Date(record.date.toDate()).toLocaleDateString()}:</strong> 
+                                Donated {record.unitsDonated} unit(s) at {record.location}.
                             </li>
                         ))
                     ) : (
@@ -36,6 +80,7 @@ const DonorDashboard: React.FC<DonorDashboardProps> = ({ user, campaigns, onPled
                     )}
                 </ul>
             </div>
+            
             <div className="dashboard-card full-width-card">
                 <h3>Upcoming Campaigns</h3>
                 <ul className="campaign-list">
@@ -43,10 +88,10 @@ const DonorDashboard: React.FC<DonorDashboardProps> = ({ user, campaigns, onPled
                         <li key={campaign.id}>
                            <div className="campaign-info">
                                 <strong>{campaign.title}</strong>
-                                <small>{campaign.date} at {campaign.location}</small>
+                                <small>{new Date(campaign.date.toDate()).toLocaleDateString()} at {campaign.location}</small>
                                 <span>{campaign.pledges} / {campaign.goal} units pledged</span>
                            </div>
-                           <button onClick={() => onPledge(campaign.id)}>Pledge to Donate</button>
+                           <button onClick={() => handlePledge(campaign.id!)}>Pledge to Donate</button>
                         </li>
                     ))}
                 </ul>
@@ -56,4 +101,3 @@ const DonorDashboard: React.FC<DonorDashboardProps> = ({ user, campaigns, onPled
 };
 
 export default DonorDashboard;
-

@@ -365,3 +365,19 @@ button:active {
     color: var(--primary-color);
 }
 
+/* Add this to your src/App.css */
+
+.profile-info p {
+    margin: 0.5rem 0;
+    font-size: 1rem;
+}
+
+.profile-info .blood-type-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 15px;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    font-weight: bold;
+    font-size: 1rem;
+}
