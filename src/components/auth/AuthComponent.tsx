@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { registerUser, loginUser, Role, RegisterData } from '../../services/authService';
 
 const AuthComponent: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
-    const [email, setEmail] = useState('');
+    const [email, setEmail] = useState(''); // Still needed for login
     const [password, setPassword] = useState('');
     const [username, setUsername] = useState('');
     const [role, setRole] = useState<Role>('donor');
@@ -21,8 +21,27 @@ const AuthComponent: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
         setError('');
         try {
             if (mode === 'register') {
+                // --- NEW LOGIC: Generate email from username and role ---
+                if (!username) {
+                    setError("Username is required.");
+                    return;
+                }
+                
+                let generatedEmail = '';
+                switch (role) {
+                    case 'donor':
+                        generatedEmail = `${username.toLowerCase()}@donor.com`;
+                        break;
+                    case 'organizer':
+                        generatedEmail = `${username.toLowerCase()}@organizer.com`;
+                        break;
+                    case 'hospital':
+                        generatedEmail = `${username.toLowerCase()}@hospital.com`;
+                        break;
+                }
+
                 const registrationData: RegisterData = {
-                    email,
+                    email: generatedEmail, // Use the auto-generated email
                     password,
                     username,
                     role,
@@ -33,33 +52,45 @@ const AuthComponent: React.FC<{ mode: 'login' | 'register' }> = ({ mode }) => {
                 };
                 await registerUser(registrationData);
             } else {
+                // Login logic remains unchanged
                 await loginUser(email, password);
             }
             navigate('/dashboard');
         } catch (err: any) {
-            setError(err.message);
+            if (err.code === 'auth/email-already-in-use') {
+                setError('This username is already taken. Please try another one.');
+            } else if (err.code === 'auth/invalid-email') {
+                setError('The generated email is invalid. Please use a different username.');
+            } else {
+                setError(err.message);
+            }
         }
     };
 
     return (
         <form onSubmit={handleSubmit} className="auth-form">
             {error && <p className="auth-error">{error}</p>}
-             {mode === 'register' && (
-                <div className="form-group">
-                    <label>Username</label>
-                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} required />
-                </div>
-            )}
+            
+            {/* Show Username field for both login and register */}
             <div className="form-group">
-                <label>Email</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+                <label>{mode === 'login' ? 'Email' : 'Username'}</label>
+                <input 
+                    type="text" 
+                    value={mode === 'login' ? email : username} 
+                    onChange={e => mode === 'login' ? setEmail(e.target.value) : setUsername(e.target.value)} 
+                    placeholder={mode === 'login' ? 'yourname@domain.com' : 'Choose a username'}
+                    required 
+                />
             </div>
+
             <div className="form-group">
                 <label>Password</label>
                 <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
             </div>
+
             {mode === 'register' && (
                 <>
+                    {/* Role selector and role-specific fields remain the same */}
                     <div className="form-group">
                         <label>I am a...</label>
                         <select value={role} onChange={e => setRole(e.target.value as Role)}>

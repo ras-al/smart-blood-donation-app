@@ -12,9 +12,30 @@ import {
     where, 
     orderBy,
     getDocs,
-    increment
+    increment,
+    setDoc,
+    deleteDoc
 } from 'firebase/firestore';
-import { BloodRequest, Campaign } from '../models';
+import { BloodRequest, Campaign,BloodInventory } from '../models';
+
+// --- Blood Inventory ---
+export const updateInventory = async (hospitalId: string, bloodType: string, units: number) => {
+    // Use a composite key for the document ID to ensure one record per hospital/blood type
+    const docId = `${hospitalId}_${bloodType.replace('+', 'p').replace('-', 'n')}`;
+    const inventoryRef = doc(db, 'bloodInventory', docId);
+
+    return await setDoc(inventoryRef, {
+        hospitalId,
+        bloodType,
+        units
+    }, { merge: true }); // Use merge to create or update
+};
+
+export const getInventoryForHospital = async (hospitalId: string) => {
+    const q = query(collection(db, 'bloodInventory'), where('hospitalId', '==', hospitalId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data() as BloodInventory);
+};
 
 // --- Campaigns ---
 export const createCampaign = async (campaignData: Omit<Campaign, 'campaignId' | 'pledges' | 'organizerId'>, userId: string, organizationName: string) => {
@@ -76,4 +97,15 @@ export const getNotifications = async (userId: string) => {
 export const markNotificationAsRead = async (notificationId: string) => {
     const notificationRef = doc(db, 'notifications', notificationId);
     return await updateDoc(notificationRef, { read: true });
+};
+
+// --- Deletion Functions ---
+export const deleteCampaign = async (campaignId: string) => {
+    const campaignRef = doc(db, 'campaigns', campaignId);
+    return await deleteDoc(campaignRef);
+};
+
+export const deleteBloodRequest = async (requestId: string) => {
+    const requestRef = doc(db, 'bloodRequests', requestId);
+    return await deleteDoc(requestRef);
 };

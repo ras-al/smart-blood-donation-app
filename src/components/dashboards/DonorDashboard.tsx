@@ -10,10 +10,8 @@ import LoadingSpinner from '../common/LoadingSpinner';
 
 const DonorDashboard: React.FC = () => {
     const { currentUser } = useAuth();
-    // Cast currentUser to Donor type to access donor-specific properties
     const donorUser = currentUser as Donor;
 
-    // Set up real-time Firestore queries
     const campaignsQuery = query(collection(db, 'campaigns'), orderBy('date', 'desc'));
     const historyQuery = currentUser
         ? query(
@@ -44,7 +42,6 @@ const DonorDashboard: React.FC = () => {
 
     return (
         <div className="dashboard-grid">
-            {/* --- NEW PROFILE CARD --- */}
             <div className="dashboard-card">
                 <h3>Profile Information</h3>
                 <div className="profile-info">
@@ -53,7 +50,6 @@ const DonorDashboard: React.FC = () => {
                     <p><strong>Blood Type:</strong> <span className="blood-type-badge">{donorUser.bloodType}</span></p>
                     <p><strong>Location:</strong> {donorUser.location}</p>
                 </div>
-                {/* You can add an "Edit Profile" button here later */}
             </div>
 
             <div className="dashboard-card">
@@ -87,9 +83,9 @@ const DonorDashboard: React.FC = () => {
                     {campaigns.map(campaign => (
                         <li key={campaign.id}>
                            <div className="campaign-info">
-                                <strong>{campaign.title}</strong>
+                                <strong>{campaign.name}</strong> {/* CORRECTED: from campaign.title */}
                                 <small>{new Date(campaign.date.toDate()).toLocaleDateString()} at {campaign.location}</small>
-                                <span>{campaign.pledges} / {campaign.goal} units pledged</span>
+                                <span>{campaign.pledges} / {campaign.goalUnits} units pledged</span> {/* CORRECTED: from campaign.goal */}
                            </div>
                            <button onClick={() => handlePledge(campaign.id!)}>Pledge to Donate</button>
                         </li>

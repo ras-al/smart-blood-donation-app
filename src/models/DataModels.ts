@@ -3,23 +3,23 @@ import { Timestamp } from 'firebase/firestore';
 
 export class Campaign {
     id?: string;
-    title: string;
+    name: string; 
     organizerId: string;
     organizationName: string;
     location: string;
     date: Timestamp;
-    goal: number;
+    goalUnits: number;
     pledges: number;
     createdAt: Timestamp;
 
     constructor(data: Partial<Campaign> = {}) {
         this.id = data.id;
-        this.title = data.title || '';
+        this.name = data.name || '';
         this.organizerId = data.organizerId || '';
         this.organizationName = data.organizationName || '';
         this.location = data.location || '';
         this.date = data.date || Timestamp.now();
-        this.goal = data.goal || 0;
+        this.goalUnits = data.goalUnits || 0;
         this.pledges = data.pledges || 0;
         this.createdAt = data.createdAt || Timestamp.now();
     }
@@ -73,4 +73,18 @@ export interface Notification {
     message: string;
     read: boolean;
     createdAt: Timestamp;
+}
+
+export class BloodInventory {
+    id?: string; // combination of hospitalId_bloodType for a unique ID
+    hospitalId: string;
+    bloodType: string;
+    units: number;
+
+    constructor(data: Partial<BloodInventory> = {}) {
+        this.id = data.id;
+        this.hospitalId = data.hospitalId || '';
+        this.bloodType = data.bloodType || '';
+        this.units = data.units || 0;
+    }
 }

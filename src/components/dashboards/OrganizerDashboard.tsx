@@ -3,13 +3,13 @@ import { Timestamp, collection, query, where } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import { useFirestoreQuery } from '../../hooks/useFirestoreQuery';
 import { useAuth } from '../../App';
-import { createCampaign } from '../../services/firestoreService';
+import { createCampaign, deleteCampaign } from '../../services/firestoreService';
 import { Campaign, CampaignOrganizer } from '../../models';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const OrganizerDashboard: React.FC = () => {
     const { currentUser } = useAuth();
-    const [newCampaignTitle, setNewCampaignTitle] = useState('');
+    const [newCampaignName, setNewCampaignName] = useState(''); // Changed from newCampaignTitle
     const [newCampaignLocation, setNewCampaignLocation] = useState('');
     const [newCampaignDate, setNewCampaignDate] = useState('');
     const [newCampaignGoal, setNewCampaignGoal] = useState(50);
@@ -25,26 +25,25 @@ const OrganizerDashboard: React.FC = () => {
 
     const handleCreateCampaign = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newCampaignTitle || !newCampaignLocation || !newCampaignDate) {
+        if (!newCampaignName || !newCampaignLocation || !newCampaignDate) {
             alert("Please fill in all fields to create a campaign.");
             return;
         }
         
         const organizerUser = currentUser as CampaignOrganizer;
 
-        // Add all required fields for the service function
         const newCampaignData = {
-            title: newCampaignTitle,
+            name: newCampaignName, // Changed from title
             location: newCampaignLocation,
             date: Timestamp.fromDate(new Date(newCampaignDate)),
-            goal: newCampaignGoal,
+            goalUnits: newCampaignGoal, // Changed from goal
             organizationName: organizerUser.organizationName,
-            createdAt: Timestamp.now(), // Add createdAt timestamp
+            createdAt: Timestamp.now(),
         };
 
         try {
             await createCampaign(newCampaignData, organizerUser.userId, organizerUser.organizationName);
-            setNewCampaignTitle('');
+            setNewCampaignName('');
             setNewCampaignLocation('');
             setNewCampaignDate('');
             setNewCampaignGoal(50);
@@ -52,6 +51,18 @@ const OrganizerDashboard: React.FC = () => {
         } catch (error) {
             console.error("Error creating campaign: ", error);
             alert('Failed to create campaign.');
+        }
+    };
+
+    const handleDeleteCampaign = async (campaignId: string) => {
+        if (window.confirm('Are you sure you want to delete this campaign?')) {
+            try {
+                await deleteCampaign(campaignId);
+                alert('Campaign deleted successfully.');
+            } catch (error) {
+                console.error("Error deleting campaign: ", error);
+                alert('Failed to delete campaign.');
+            }
         }
     };
     
@@ -65,8 +76,8 @@ const OrganizerDashboard: React.FC = () => {
                 <h3>Create New Campaign</h3>
                 <form onSubmit={handleCreateCampaign}>
                     <div className="form-group">
-                        <label htmlFor="title">Campaign Title</label>
-                        <input type="text" id="title" value={newCampaignTitle} onChange={(e) => setNewCampaignTitle(e.target.value)} />
+                        <label htmlFor="name">Campaign Name</label> {/* Changed from title */}
+                        <input type="text" id="name" value={newCampaignName} onChange={(e) => setNewCampaignName(e.target.value)} />
                     </div>
                     <div className="form-group">
                         <label htmlFor="location">Location</label>
@@ -90,10 +101,11 @@ const OrganizerDashboard: React.FC = () => {
                         organizerCampaigns.map(campaign => (
                             <li key={campaign.id}>
                                <div className="campaign-info">
-                                    <strong>{campaign.title}</strong>
+                                    <strong>{campaign.name}</strong> {/* Changed from title */}
                                     <small>{new Date(campaign.date.toDate()).toLocaleDateString()} at {campaign.location}</small>
-                                    <span>{campaign.pledges} / {campaign.goal} units pledged</span>
+                                    <span>{campaign.pledges} / {campaign.goalUnits} units pledged</span> {/* Changed from goal */}
                                </div>
+                               <button className="secondary" onClick={() => handleDeleteCampaign(campaign.id!)}>Delete</button>
                             </li>
                         ))
                     ) : (

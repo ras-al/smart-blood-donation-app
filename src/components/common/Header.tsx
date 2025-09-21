@@ -28,7 +28,7 @@ const Header: React.FC = () => {
                     navigate(currentUser ? '/dashboard' : '/');
                 }}
             >
-                ❤️ VitaLink
+                ❤️ DonorLink
             </a>
             <nav className="main-nav">
                 {currentUser ? (

@@ -1,39 +1,89 @@
-/* --- GLOBAL STYLES & VARIABLES --- */
+/* --- MODERN UI - VITALINK --- */
+
+/* --- Google Fonts Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* --- CSS Variables for Theming --- */
 :root {
-    --primary-color: #d92c2c; /* A strong red for blood donation theme */
-    --primary-hover: #b02424;
-    --secondary-color: #f4f7f6;
-    --text-color: #333;
-    --light-text-color: #fff;
-    --border-color: #ddd;
-    --background-color: #ffffff;
-    --card-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --primary-color: #D92C2C;
+    --primary-hover: #C02626;
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+    --background-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --text-color: #212529;
+    --light-text-color: #ffffff;
+    --border-color: #dee2e6;
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     --border-radius: 8px;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    --primary-gradient: linear-gradient(135deg, #e53935, #c62828);
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* --- Global Styles --- */
 body {
     margin: 0;
-    background-color: var(--secondary-color);
+    background-color: var(--background-color);
     color: var(--text-color);
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+/* --- Buttons --- */
 button {
     cursor: pointer;
     border: none;
     border-radius: var(--border-radius);
-    padding: 10px 20px;
+    padding: 12px 24px;
     font-size: 1rem;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 button:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
 }
 
-/* --- APP SHELL & LAYOUT --- */
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.auth-button,
+.dashboard-card button:not(.secondary) {
+    background: var(--primary-gradient);
+    color: var(--light-text-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-button:hover,
+.dashboard-card button:not(.secondary):hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-card button.secondary {
+    background-color: #e9ecef;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    padding: 8px 16px;
+}
+
+.dashboard-card button.secondary:hover {
+    background-color: #ced4da;
+}
+
+
+/* --- App Layout --- */
 .app-shell {
     display: flex;
     flex-direction: column;
@@ -45,15 +95,16 @@ button:active {
     justify-content: space-between;
     align-items: center;
     padding: 1rem 2rem;
-    background-color: var(--background-color);
+    background-color: var(--surface-color);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .logo {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: var(--primary-color);
     text-decoration: none;
@@ -62,16 +113,18 @@ button:active {
 .main-nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
 }
 
 .main-nav .user-greeting {
     font-weight: 500;
+    color: #495057;
 }
 
 .main-nav button {
     background-color: var(--primary-color);
     color: var(--light-text-color);
+    padding: 10px 20px;
 }
 
 .main-nav button:hover {
@@ -83,40 +136,55 @@ button:active {
     padding: 2rem;
 }
 
-/* --- HOME PAGE --- */
+/* --- Home Page --- */
 .home-page-container {
     max-width: 1200px;
     margin: auto;
 }
 
 .home-hero {
+    position: relative;
+    overflow: hidden;
+    background-color: #fdecec; 
     text-align: center;
-    padding: 4rem 1rem;
+    padding: 5rem 2rem;
     border-radius: var(--border-radius);
-    background-color: #fdecec; /* A light, clean background that matches the theme */
+}
+
+.hyperspeed-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    display: inline-block;
 }
 
 .hero-content h1 {
-    font-size: 3rem;
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
     color: var(--primary-color);
     margin-bottom: 1rem;
+    font-weight: 700;
 }
 
 .hero-content p {
     font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto 2rem auto;
+    max-width: 650px;
+    margin: 0 auto 2.5rem auto;
+    color: var(--text-color);
 }
 
 .hero-content button {
-    background-color: var(--primary-color);
-    color: var(--light-text-color);
     font-size: 1.2rem;
-    padding: 15px 30px;
-}
-
-.hero-content button:hover {
-    background-color: var(--primary-hover);
+    padding: 15px 35px;
 }
 
 .home-features {
@@ -126,44 +194,53 @@ button:active {
 
 .home-features h2 {
     font-size: 2.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+    color: var(--text-color);
 }
 
 .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 2rem;
 }
 
 .feature-card {
-    background: var(--background-color);
+    background: var(--surface-color);
     padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     text-align: left;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .feature-card h3 {
     color: var(--primary-color);
     margin-top: 0;
+    font-size: 1.5rem;
 }
 
-
-/* --- AUTH PAGE & FORM --- */
+/* --- Auth Page & Forms --- */
 .auth-page {
     display: flex;
     justify-content: center;
-    align-items: center;
-    padding-top: 2rem;
+    align-items: flex-start;
+    padding: 2rem 1rem;
 }
 
 .auth-form-container {
     width: 100%;
-    max-width: 400px;
-    background: var(--background-color);
-    padding: 2rem;
+    max-width: 450px;
+    background: var(--surface-color);
+    padding: 2.5rem;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
 }
 
 .auth-tabs {
@@ -195,126 +272,173 @@ button:active {
     right: 0;
     height: 3px;
     background-color: var(--primary-color);
+    border-radius: 3px 3px 0 0;
 }
 
-.auth-form .form-group {
+.form-group {
     margin-bottom: 1.5rem;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    font-weight: 600;
+    font-weight: 500;
+    color: #495057;
 }
 
 .form-group input,
 .form-group select {
     width: 100%;
-    padding: 12px;
+    padding: 12px 15px;
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
     font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(217, 44, 44, 0.2);
 }
 
 .auth-button {
     width: 100%;
     padding: 15px;
-    background-color: var(--primary-color);
-    color: var(--light-text-color);
     font-size: 1.1rem;
-}
-.auth-button:hover {
-    background-color: var(--primary-hover);
+    font-weight: 600;
 }
 
 .auth-error {
     color: var(--primary-color);
     background-color: #fdd;
-    padding: 10px;
+    padding: 12px;
     border-radius: var(--border-radius);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     text-align: center;
+    font-size: 0.9rem;
 }
 
-
-/* --- DASHBOARD --- */
+/* --- Dashboard --- */
 .dashboard-page {
     max-width: 1200px;
     margin: auto;
 }
 
 .dashboard-header {
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
+
 .dashboard-header h1 {
     margin: 0;
+    font-size: 2.5rem;
 }
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 2rem;
 }
 
 .dashboard-card {
-    background: var(--background-color);
-    padding: 1.5rem;
+    background: var(--surface-color);
+    padding: 2rem;
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
 }
+
+.dashboard-card.full-width-card {
+    grid-column: 1 / -1;
+}
+
 .dashboard-card h3 {
     margin-top: 0;
+    margin-bottom: 1.5rem;
     color: var(--primary-color);
-}
-
-.dashboard-card button {
-    background-color: var(--primary-color);
-    color: var(--light-text-color);
-}
-.dashboard-card button:hover {
-    background-color: var(--primary-hover);
-}
-
-.dashboard-card button.secondary {
-    background-color: #6c757d;
-    font-size: 0.9rem;
-    padding: 8px 12px;
-}
-
-.dashboard-card button.secondary:hover {
-    background-color: #5a6268;
+    font-size: 1.5rem;
 }
 
 .dashboard-card ul {
     list-style-type: none;
     padding: 0;
+    margin: 0;
 }
+
 .dashboard-card li {
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border-color);
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-}
-.dashboard-card li:last-child {
-    border-bottom: none;
-}
-.request-info {
-    flex-grow: 1;
-}
-.badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 12px;
-    background-color: #e0e0e0;
-    margin-right: 5px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
 }
 
+.dashboard-card li:last-child {
+    margin-bottom: 0;
+}
+
+/* --- List Item Styles --- */
+.request-info, .campaign-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex-grow: 1;
+}
+
+.request-info strong, .campaign-info strong {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.request-info small, .campaign-info small {
+    color: #6c757d;
+}
+
+.request-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.inventory-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* --- Profile & Impact Cards --- */
+.profile-info p {
+    margin: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.profile-info .blood-type-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.impact-score {
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.impact-score h2 {
+    font-size: 4rem;
+    margin: 0;
+    color: var(--primary-color);
+}
 
 /* --- MODAL --- */
 .modal-backdrop {
@@ -323,61 +447,193 @@ button:active {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2000;
+    padding: 1rem;
 }
 
 .modal-content {
     background: white;
-    padding: 2rem;
+    padding: 2.5rem;
     border-radius: var(--border-radius);
     width: 90%;
-    max-width: 500px;
+    max-width: 600px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 .modal-content h3 {
     margin-top: 0;
+    font-size: 1.75rem;
 }
 .modal-content button {
-    margin-top: 1rem;
-    background-color: var(--primary-color);
+    margin-top: 1.5rem;
+    background: var(--primary-gradient);
     color: white;
 }
-
-/* --- LOADING OVERLAY --- */
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 3000;
+.modal-content pre {
+    background-color: #f1f3f5;
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
 }
-.loading-overlay span {
+
+/* --- Notification Bell --- */
+.notification-bell {
+    position: relative;
+}
+
+.bell-button {
+    background: none;
+    border: none;
     font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--primary-color);
+    position: relative;
+    padding: 0.5rem;
 }
 
-/* Add this to your src/App.css */
-
-.profile-info p {
-    margin: 0.5rem 0;
-    font-size: 1rem;
-}
-
-.profile-info .blood-type-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 15px;
+.bell-button .badge {
+    position: absolute;
+    top: 0;
+    right: 0;
     background-color: var(--primary-color);
-    color: var(--light-text-color);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: bold;
-    font-size: 1rem;
+}
+
+.notification-list-container {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    width: 350px;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    z-index: 1001;
+    border: 1px solid var(--border-color);
+}
+
+.notification-list {
+    padding: 1rem;
+}
+
+.notification-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    background-color: #f1f3f5;
+}
+
+.notification-item.read {
+    opacity: 0.6;
+}
+
+.notification-item p {
+    margin: 0 0 0.25rem 0;
+}
+
+.notification-item small {
+    color: #6c757d;
+}
+
+/*
+-----------------------------
+--- RESPONSIVE STYLES ---
+-----------------------------
+*/
+
+/* --- Medium screens (Tablets) --- */
+@media (max-width: 768px) {
+    .content-area {
+        padding: 1.5rem;
+    }
+
+    .main-header {
+        padding: 1rem;
+    }
+
+    .main-nav .user-greeting {
+        display: none; /* Hide greeting on smaller screens to save space */
+    }
+
+    .hero-content {
+        padding: 1.5rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+
+    .dashboard-card {
+        padding: 1.5rem;
+    }
+}
+
+/* --- Small screens (Mobile) --- */
+@media (max-width: 576px) {
+    .main-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .content-area {
+        padding: 1rem;
+    }
+    
+    .hero-content {
+        width: 100%;
+    }
+    
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .auth-form-container {
+        padding: 1.5rem;
+    }
+
+    .dashboard-card li, .campaign-list li {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .request-actions, .campaign-list li button {
+        width: 100%;
+    }
+
+    .inventory-item {
+        grid-template-columns: 60px 1fr;
+    }
+
+    .inventory-item button {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    .notification-list-container {
+        width: 300px;
+    }
 }

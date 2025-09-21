@@ -12,7 +12,7 @@ export type Role = 'donor' | 'hospital' | 'organizer';
 
 export interface RegisterData {
     email: string;
-    password: string; // Added missing property
+    password: string; 
     username: string;
     role: Role;
     bloodType?: string;
@@ -26,7 +26,7 @@ export const registerUser = async (data: RegisterData): Promise<UserCredential> 
     const { user } = userCredential;
 
     const userProfile = {
-        uid: user.uid,
+        userId: user.uid, // CORRECTED: Changed 'uid' to 'userId'
         username: data.username,
         email: data.email,
         role: data.role,
@@ -39,7 +39,6 @@ export const registerUser = async (data: RegisterData): Promise<UserCredential> 
     return userCredential;
 };
 
-// Added explicit types for parameters
 export const loginUser = async (email: string, password: string) => {
     return signInWithEmailAndPassword(auth, email, password);
 };
